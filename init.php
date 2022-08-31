@@ -190,8 +190,38 @@ class mercury_fulltext extends Plugin
         return $this->process_article($article);
     }
 
+    public function send_request_weibo($link)
+    {
+        // $link_format - http://weibo.com/{uid}/{bid};
+        $vars = explode("/", $link);
+        $vars_len = count($vars);
+        $uid = $vars[$vars_len - 2];
+        $bid = $vars[$vars_len - 1];
+        $url = "https://m.weibo.cn/statuses/show?id={$bid}";
+
+        $curl = curl_init($url);
+        curl_setopt($curl, CURLOPT_URL, $url);
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+
+        $headers = array(
+           "Referer: https://m.weibo.cn/u/${uid}",
+           "MWeibo-Pwa: 1",
+           "X-Requested-With: XMLHttpRequest",
+           "User-Agent: Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1",
+        );
+        curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
+
+        $output = json_decode(curl_exec($curl));
+        curl_close($curl);
+        $output->content = $output->data->text;
+        return $output;
+    }
+
     public function send_request($link)
     {
+        if (str_contains($link, "weibo.")){
+        return $this->send_request_weibo($link);
+        }
         $api_endpoint = $this
             ->host
             ->get($this, "mercury_API");
@@ -279,7 +309,6 @@ class mercury_fulltext extends Plugin
         if (property_exists($output, 'content') && $output->content) {
             $result["content"] = $output->content;
         }
-
         print json_encode($result);
     }
 
