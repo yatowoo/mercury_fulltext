@@ -213,7 +213,13 @@ class mercury_fulltext extends Plugin
 
         $output = json_decode(curl_exec($curl));
         curl_close($curl);
-        $output->content = $output->data->text;
+
+        $entry_text = $output->data->text;
+        foreach($output->data->pics as $pic){
+          $entry_text = $entry_text . "<img src=\"{$pic->large->url}\" />";
+        }
+
+        $output->content = $entry_text;
         return $output;
     }
 
